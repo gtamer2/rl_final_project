@@ -49,7 +49,7 @@ def load_reward_model():
     return pipeline("text-classification", model="lvwerra/distilbert-imdb")
 
 
-def train():
+def perform_rlhf_ppo_training():
     # Get reward model
     reward_model = load_reward_model()
 
