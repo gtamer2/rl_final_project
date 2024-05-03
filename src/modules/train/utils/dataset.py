@@ -22,12 +22,10 @@ def getDataset(dataset_size=None, batch_size=32):
     cols = list(dataset[0].keys())
     
     dataset = dataset.rename_column("prompt", "query")
-    dataset = dataset.remove_columns([k for k in cols if k!="query" and k!='prompt'])
+    dataset = dataset.remove_columns([k for k in cols if k!="query" and k!='prompt' and k!='chosen'])
     dataset = dataset.map(tokenize, batched=True, batch_size=batch_size)
     
-    response_set = response_set.remove_columns([k for k in cols if k!="chosen"])
-    
-    return dataset, response_set
+    return dataset
 
 # Usage
 # dataset, response_set = getDataset(10)

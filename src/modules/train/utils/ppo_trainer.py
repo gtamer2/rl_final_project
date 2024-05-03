@@ -4,7 +4,11 @@ from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer
 from transformers import pipeline
 from tqdm import tqdm
 import torch
+from utils.dataset import getDataset
+from utils.reward import getScores
+import copy
 
+BATCH_SIZE = 32
 
 def load_ppo_config():
     # The PPOConfig dataclass controls all the hyperparameters and settings for the PPO algorithm and trainer.
@@ -14,6 +18,7 @@ def load_ppo_config():
         model_name="EleutherAI/gpt-neo-125M",
         learning_rate=1.41e-5,
         seed=0,
+        batch_size=BATCH_SIZE
     )
 
 
@@ -28,11 +33,6 @@ def load_tokenizer(model_name: str):
     # HF automatically pulls the correct tokenizer for the model
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
-
-
-def load_dataset():
-    # TODO: integrate w/ our datset code
-    return pipeline("text-generation", model="lvwerra/distilbert-imdb")
 
 
 def build_ppo_trainer(model, config, dataset, tokenizer):
@@ -50,14 +50,12 @@ def load_reward_model():
 
 
 def perform_rlhf_ppo_training():
-    # Get reward model
-    reward_model = load_reward_model()
-
     # Get PPO trainer
     config = load_ppo_config()
     language_model = load_model(model_name=config.model_name)
+    # ref_language_model = copy.deepcopy(language_model)
     tokenizer = load_tokenizer(model_name=config.model_name)
-    dataset = load_dataset()
+    dataset = getDataset()
     ppo_trainer = build_ppo_trainer(language_model, config, dataset, tokenizer)
 
     # Train the model
@@ -81,9 +79,18 @@ def perform_rlhf_ppo_training():
             batch["response"] = [tokenizer.decode(r.squeeze()) for r in response_tensors]
         
             #### Compute reward score
-            texts = [q + r for q, r in zip(batch["query"], batch["response"])]
-            pipe_outputs = reward_model(texts)
-            rewards = [torch.tensor(output[1]["score"]) for output in pipe_outputs]
+            # our code
+            rewards = getScores(
+                inputs= batch["query"],
+                candidates= batch["response"],
+                ref_candidates=batch["chosen"],
+                batch_size=BATCH_SIZE
+            )
+
+            # HF code
+            # texts = [q + r for q, r in zip(batch["query"], batch["response"])]
+            # pipe_outputs = reward_model(texts)
+            # rewards = [torch.tensor(output[1]["score"]) for output in pipe_outputs]
         
             #### Run PPO step
             stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
