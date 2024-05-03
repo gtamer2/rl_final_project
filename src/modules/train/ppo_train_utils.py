@@ -11,7 +11,7 @@ def load_ppo_config():
     # All parameters and their default values can be found here: https://huggingface.co/docs/trl/v0.8.6/en/trainer#trl.PPOConfig
     return PPOConfig(
         task_name="ppo-for-rlhf-on-gpt-neo",
-        model_name="gpt-neo-125M",
+        model_name="EleutherAI/gpt-neo-125M",
         learning_rate=1.41e-5,
         seed=0,
     )
