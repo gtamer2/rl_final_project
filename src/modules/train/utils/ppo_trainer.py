@@ -4,11 +4,11 @@ from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer
 from transformers import pipeline
 from tqdm import tqdm
 import torch
-from utils.dataset import getDataset
+from utils.dataset import getDataset, load_tokenizer
 from utils.reward import getScores
 import copy
 
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 
 def load_ppo_config():
     # The PPOConfig dataclass controls all the hyperparameters and settings for the PPO algorithm and trainer.
@@ -29,10 +29,11 @@ def load_model(model_name: str):
     return AutoModelForCausalLMWithValueHead.from_pretrained(model_name)
 
 
-def load_tokenizer(model_name: str):
-    # HF automatically pulls the correct tokenizer for the model
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    tokenizer.pad_token = tokenizer.eos_token
+# def load_tokenizer(model_name: str):
+#     # HF automatically pulls the correct tokenizer for the model
+#     tokenizer = AutoTokenizer.from_pretrained(model_name)
+#     tokenizer.pad_token = tokenizer.eos_token
+#     return tokenizer
 
 
 def build_ppo_trainer(model, config, dataset, tokenizer):
@@ -55,7 +56,7 @@ def perform_rlhf_ppo_training():
     language_model = load_model(model_name=config.model_name)
     # ref_language_model = copy.deepcopy(language_model)
     tokenizer = load_tokenizer(model_name=config.model_name)
-    dataset = getDataset()
+    dataset = getDataset(dataset_size=1000, batch_size=BATCH_SIZE)
     ppo_trainer = build_ppo_trainer(language_model, config, dataset, tokenizer)
 
     # Train the model

@@ -2,12 +2,25 @@ from datasets import load_dataset
 from transformers import AutoTokenizer
 import copy
 
-tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neo-125m")
-tokenizer.pad_token = tokenizer.eos_token
+def load_tokenizer(model_name: str):
+    # HF automatically pulls the correct tokenizer for the model
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer.pad_token = tokenizer.eos_token
+    return tokenizer
 
 def tokenize(batch):
-    batch["input_ids"] = tokenizer(batch["query"], padding=True, truncation=True, return_tensors="pt").input_ids
+    tokenizer = load_tokenizer("EleutherAI/gpt-neo-2.7B")
+    batch["input_ids"] = tokenizer(
+                            batch["query"], 
+                            padding="max_length", 
+                            truncation=True, 
+                            return_tensors="pt",
+                            model_max_length=2048,
+                            max_length=2048
+                        ).input_ids
+    
     return batch
+
 
 def getDataset(dataset_size=None, batch_size=32):
     
@@ -17,7 +30,6 @@ def getDataset(dataset_size=None, batch_size=32):
         split = "train[:" + str(dataset_size) + "]"
         
     dataset = load_dataset("argilla/OpenHermesPreferences", split=split)
-    response_set = copy.deepcopy(dataset)
     
     cols = list(dataset[0].keys())
     
