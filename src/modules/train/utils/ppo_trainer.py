@@ -1,14 +1,9 @@
 from trl import PPOConfig
-from transformers import AutoTokenizer
-from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer, AutoModelForSeq2SeqLMWithValueHead 
-from transformers import pipeline
+from trl import PPOConfig, PPOTrainer, AutoModelForSeq2SeqLMWithValueHead 
 from tqdm import tqdm
-# import torch
+import torch
 from utils.dataset import getDataset, load_tokenizer
 from utils.reward import getScores
-import torch
-import gc
-# import copy
 
 BATCH_SIZE = 32
 
@@ -31,13 +26,6 @@ def load_model(model_name: str):
     # generator = pipeline('text-generation', model='EleutherAI/gpt-neo-125M')
     # return AutoModelForCausalLMWithValueHead.from_pretrained(model_name)
     return AutoModelForSeq2SeqLMWithValueHead.from_pretrained(model_name)
-
-
-# def load_tokenizer(model_name: str):
-#     # HF automatically pulls the correct tokenizer for the model
-#     tokenizer = AutoTokenizer.from_pretrained(model_name)
-#     tokenizer.pad_token = tokenizer.eos_token
-#     return tokenizer
 
 
 def build_ppo_trainer(model, config, dataset, tokenizer):
@@ -76,13 +64,7 @@ def perform_rlhf_ppo_training():
     epochs = 10
     for epoch in range(epochs):
         print(f"Epoch {epoch}/{epochs}")
-        for batch in tqdm(ppo_trainer.dataloader):
-            # Clear CUDA cache
-            torch.cuda.empty_cache()
-
-            # Perform garbage collection
-            gc.collect()
-            
+        for batch in tqdm(ppo_trainer.dataloader):            
             query_tensors = batch["input_ids"]
             query_tensors = torch.stack(query_tensors)            
             query_tensors = torch.transpose(query_tensors, 0, 1)
@@ -94,18 +76,9 @@ def perform_rlhf_ppo_training():
             
             batch["response"] = [[tokenizer.decode(r.squeeze())] for r in response_tensors]
             
-            batch["chosen"] = []
-            
-            c = 0
-            for k in batch["query"]:
-                try:
-                    batch["chosen"].append(responseDict[k])
-                    c += 1
-                except:
-                    batch["chosen"].append([{},{"content":""}])
+            batch["chosen"] = [responseDict[k] for k in batch["query"]]
         
             #### Compute reward score
-            # our code
             rewards = getScores(
                 inputs= batch["query"],
                 candidates= batch["response"],
@@ -118,12 +91,7 @@ def perform_rlhf_ppo_training():
             #### Run PPO step
             stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
             ppo_trainer.log_stats(stats, batch, rewards)
-            
-            del batch
-            del query_tensors
-            del response_tensors
-            del stats
-            del rewards
 
     #### Save model
     ppo_trainer.save_pretrained("my_ppo_model")
+    print("Model saved")
