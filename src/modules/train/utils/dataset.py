@@ -9,21 +9,18 @@ def load_tokenizer(model_name: str):
     return tokenizer
 
 def tokenize(batch):
-    tokenizer = load_tokenizer("EleutherAI/gpt-neo-2.7B")
+    tokenizer = load_tokenizer("google-t5/t5-small")
     batch["input_ids"] = tokenizer(
                             batch["query"], 
                             padding="max_length", 
                             truncation=True, 
                             return_tensors="pt",
-                            model_max_length=2048,
-                            max_length=2048
+                            max_length=32
                         ).input_ids
     
     return batch
 
-
-def getDataset(dataset_size=None, batch_size=32):
-    
+def getDataset(dataset_size=None, batch_size=32):    
     if dataset_size is None:
         split = "train"
     else:
