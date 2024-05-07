@@ -3,7 +3,7 @@ from trl import PPOConfig, PPOTrainer, AutoModelForSeq2SeqLMWithValueHead
 from tqdm import tqdm
 import torch
 from utils.dataset import getDataset, load_tokenizer
-from utils.reward import getScores
+# from utils.reward import getScores
 from utils.starling_reward.load_starling_reward_model import load_starling_reward_model_for_inference, get_reward as get_starling_reward
 BATCH_SIZE = 32
 
