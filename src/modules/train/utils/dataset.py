@@ -20,8 +20,8 @@ def tokenize(batch):
     
     return batch
 
-def getDataset(dataset_size=None, batch_size=32):    
-    if dataset_size is None:
+def getDataset(dataset_size=-1, batch_size=32):    
+    if dataset_size == -1:
         split = "train"
     else:
         split = "train[:" + str(dataset_size) + "]"

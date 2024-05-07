@@ -1,5 +1,6 @@
-my_ppo_model
-
+# Model and results files
+my_ppo_model*
+reward*.npy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
