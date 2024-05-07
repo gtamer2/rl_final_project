@@ -4,7 +4,7 @@ from tqdm import tqdm
 import torch
 from utils.dataset import getDataset, load_tokenizer
 from utils.reward import getScores
-
+from utils.starling_reward.load_starling_reward_model import load_starling_reward_model_for_inference, get_reward as get_starling_reward
 BATCH_SIZE = 32
 
 def load_ppo_config():
@@ -37,11 +37,12 @@ def build_ppo_trainer(model, config, dataset, tokenizer):
     )
 
 
+
+
 def perform_rlhf_ppo_training():
     # Get PPO trainer
     config = load_ppo_config()
     language_model = load_model(model_name=config.model_name)
-    # ref_language_model = copy.deepcopy(language_model)
     tokenizer = load_tokenizer(model_name=config.model_name)
     dataset = getDataset(dataset_size=68, batch_size=BATCH_SIZE)
     ppo_trainer = build_ppo_trainer(language_model, config, dataset, tokenizer) 
@@ -50,8 +51,10 @@ def perform_rlhf_ppo_training():
     for i in range(len(dataset)):
         responseDict[str(dataset[i]["query"])] = dataset[i]["chosen"]
 
+    # Get reward model
+    reward_model, reward_tokenizer = load_starling_reward_model_for_inference()
+
     # Train the model
-    
     generation_kwargs = {
         "min_length": 30,
         "top_k": 10,
@@ -79,12 +82,13 @@ def perform_rlhf_ppo_training():
             batch["chosen"] = [responseDict[k] for k in batch["query"]]
         
             #### Compute reward score
-            rewards = getScores(
-                inputs= batch["query"],
-                candidates= batch["response"],
-                ref_candidates=batch["chosen"],
-                batch_size=BATCH_SIZE
-            )
+            # rewards = getScores(
+            #     inputs= batch["query"],
+            #     candidates= batch["response"],
+            #     ref_candidates=batch["chosen"],
+            #     batch_size=BATCH_SIZE
+            # )
+            rewards = get_starling_reward(reward_model, reward_tokenizer, batch["response"], BATCH_SIZE)
             
             rewards = [torch.tensor(k) for k in rewards]
         
