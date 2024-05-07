@@ -27,7 +27,7 @@ def main(model_name,dataset_size,epochs,batch_size,lr,seed,mode,model_save_path,
         plt.xlabel('Epochs')
         plt.ylabel('Average Reward')
         
-        plt.show()
+        plt.savefig('avg_reward_curve.png')
 
     else:
         raise Exception("Invalid mode, use --mode=\"train\", --mode=\"predict\" or --mode=\"visualize\"")

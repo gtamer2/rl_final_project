@@ -1,6 +1,7 @@
 # Model and results files
 my_ppo_model*
 reward*.npy
+avg_reward_curve.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
