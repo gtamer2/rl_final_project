@@ -39,6 +39,20 @@ python main.py --model_name="google-t5/t5-small" --batch_size=32 --epochs=200 --
 - `dataset_size`: Number of data samples (Use `-1` to train on the entire dataset)
 - `seed`
 
+## Model Prediction
+
+Execute the prediction script with the following command:
+
+```bash
+python main.py --model_name="my_ppo_model" --batch_size=32 --mode="predict"
+```
+
+### Parameters
+
+- `batch_size`: Batch size for training.
+- `model_name`: LLM Model.
+- `dataset_size`: Number of data samples (Use `-1` to generate predictions for the entire test set)
+
 ## Visualize Reward Curve
 
 To visualize the reward curve, use the following command:
@@ -46,6 +60,14 @@ To visualize the reward curve, use the following command:
 ```bash
 python main.py --rewards_save_path="reward.npy" --mode="visualize"
 ```
+
+## Results
+
+Model | Avg. Reward | Avg. BLEU Score | Avg. BERT Score
+--- | --- | --- | ---
+T5 Original | -11.2550 | 0.0024 | 0.0273
+T5 with RLHF | -4.7752 | 0.0143 | 0.0339
+
 
 <!-- ## Example Predictions
 
